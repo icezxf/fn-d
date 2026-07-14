@@ -1,0 +1,23 @@
+services:
+  fntv-record-view:
+    container_name: fntv-record-view
+    image: qiaokes/fntv-record-view:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      # 只读挂载外部数据库目录到容器内的database目录
+      - /usr/local/apps/@appdata/trim.media/database:/app/database:ro
+    environment:
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
+      - TZ=Asia/Shanghai # 设置时区
+    restart: unless-stopped
+    network_mode: bridge
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+          cpus: '0.5'
+        reservations:
+          memory: 10M
+          cpus: '0.1'
