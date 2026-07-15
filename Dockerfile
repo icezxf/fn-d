@@ -30,6 +30,11 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   if [ ! -s /tmp/trim.media.tar.gz ]; then echo "Download failed: file is empty"; exit 1; fi && \
   mkdir -p /fniso/usr/local/apps/@appcenter/ && \
   tar -xzf /tmp/trim.media.tar.gz -C /fniso/usr/local/apps/@appcenter/ && \
+  # === 方案一：修复文件权限 ===
+  echo "Fixing file permissions for trim.media..." && \
+  chmod -R 755 /fniso/usr/local/apps/@appcenter/trim.media/ && \
+  # 如果知道某个特定文件需要特殊权限，可以在这里单独设置
+  # 例如：chmod 644 /fniso/usr/local/apps/@appcenter/trim.media/config.json
   # 安装Go并编译fakebroker
   GOPKG=go1.24.10.linux-arm64 && \
   curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
@@ -49,6 +54,8 @@ COPY --from=builder /fniso/usr/local/apps/@appcenter /usr/local/apps/@appcenter
 # 创建目标目录并复制 manifest 文件
 RUN mkdir -p /var/apps/trim.media/
 COPY --from=builder /manifest /var/apps/trim.media/manifest
+# 设置 manifest 文件权限
+RUN chmod 644 /var/apps/trim.media/manifest
 
 WORKDIR /usr/trim
 
