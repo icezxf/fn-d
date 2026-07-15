@@ -24,7 +24,7 @@ jobs:
       - name: Download fnos.iso
         run: |
           echo "Downloading fnos.iso..."
-          ISO_URL="https://iso.liveupdate.fnnas.com/arm/trim/1.1.31/armsr/fnos_Mainland-PE_arm_1.1.31_armsr_1366.iso?sign=a7da1f6db7330995780bd939e93c3b91&t=1784081809"
+          ISO_URL="https://iso.liveupdate.fnnas.com/arm/trim/1.1.31/armsr/fnos_Mainland-PE_arm_1.1.31_armsr_1366.iso?sign=ed9b5013d4c2a86695890122315bce01&t=1784122085"
           wget --no-check-certificate -O fnos.iso "${ISO_URL}"
           ls -lh fnos.iso
           # 验证文件大小（如果小于 100MB 说明下载失败）
