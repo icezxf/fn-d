@@ -1,6 +1,7 @@
 FROM debian:12.12 AS builder
 
-COPY ./fnos.iso ./fnos.iso
+# 所有文件都从构建上下文复制（由 GitHub Actions 提前下载好）
+COPY fnos.iso ./fnos.iso
 COPY trim.media.tar.gz /tmp/trim.media.tar.gz
 COPY fakebroker.go ./fakebroker.go
 COPY init.sql ./init.sql
@@ -10,13 +11,12 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   apt update && apt install -y p7zip-full curl && \
   # 解压ISO
   7z x fnos.iso -ofniso && \
-  # ★★★ 解压整个 usr 目录 ★★★
-  tar -C /fniso -xvf fniso/trimfs.tgz usr && \
-  # 移动脚本文件
-  mkdir -p /fniso/usr/trim/etc && \
-  mv entrypoint.sh init.sql /fniso/usr/trim/ && \
+  tar -C /fniso -xvf fniso/trimfs.tgz usr/trim/bin/mediasrv usr/trim/lib/libnebula.so \
+  usr/trim/lib/libppjson.so usr/trim/lib/mediasrv && \
+  mkdir -p fniso/usr/trim/etc && \
+  mv entrypoint.sh init.sql fniso/usr/trim/ && \
   # 解压 trim.media.tar.gz
-  mkdir -p /fniso/usr/local/apps/@appcenter/ && \
+  mkdir -p fniso/usr/local/apps/@appcenter/ && \
   tar -xzf /tmp/trim.media.tar.gz -C /fniso/usr/local/apps/@appcenter/ && \
   chmod -R 755 /fniso/usr/local/apps/@appcenter/trim.media/ && \
   # 编译 fakebroker（ARM64）
@@ -24,9 +24,10 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
   tar -C /opt -xvf ${GOPKG}.tar.gz && \
   /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker fakebroker.go && \
+  # 清理临时文件
   rm -f fnos.iso /tmp/trim.media.tar.gz ${GOPKG}.tar.gz
 
-# ====== final stage ======
+# ======  final stage   ======
 FROM --platform=linux/arm64 debian:12.12
 
 ENV LD_LIBRARY_PATH=/usr/trim/lib/mediasrv LOG_LEVEL=info MEDIA_DIRS=/vol1/1000/media
