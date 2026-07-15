@@ -19,29 +19,32 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   7z x fnos.iso -ofniso && \
   cd /fniso && tar -xvf trimfs.tgz --strip-components=1 ./usr/trim/bin/mediasrv ./usr/trim/lib/libnebula.so ./usr/trim/lib/libppjson.so ./usr/trim/lib/mediasrv && \
   mkdir -p /fniso/usr/trim/etc && mv /entrypoint.sh /init.sql /fniso/usr/trim/ && \
-  # 下载 trim.media.tar.gz 到 builder 的根目录
+  # 下载 trim.media.tar.gz
   echo "Downloading trim.media.tar.gz..." && \
-  wget --no-check-certificate --timeout=30 --tries=5 -O /trim.media.tar.gz "${MEDIA_TAR_URL}" || \
-  curl --insecure --retry 5 --retry-delay 10 -L -o /trim.media.tar.gz "${MEDIA_TAR_URL}" && \
-  ls -lh /trim.media.tar.gz && \
-  if [ ! -s /trim.media.tar.gz ]; then echo "Download failed: file is empty"; exit 1; fi && \
+  wget --no-check-certificate --timeout=30 --tries=5 -O /tmp/trim.media.tar.gz "${MEDIA_TAR_URL}" || \
+  curl --insecure --retry 5 --retry-delay 10 -L -o /tmp/trim.media.tar.gz "${MEDIA_TAR_URL}" && \
+  ls -lh /tmp/trim.media.tar.gz && \
+  if [ ! -s /tmp/trim.media.tar.gz ]; then echo "Download failed: file is empty"; exit 1; fi && \
+  # ★★★ 在 builder 阶段直接解压 trim.media.tar.gz ★★★
+  mkdir -p /fniso/usr/local/apps/@appcenter/ && \
+  tar -xzf /tmp/trim.media.tar.gz -C /fniso/usr/local/apps/@appcenter/ && \
+  chmod -R 755 /fniso/usr/local/apps/@appcenter/trim.media/ && \
   # 编译 fakebroker
   GOPKG=go1.24.10.linux-arm64 && \
   curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
   tar -C /opt -xvf ${GOPKG}.tar.gz && \
   GOARCH=arm64 /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker /fakebroker.go && \
-  # ★★★ 清理临时文件（注意：不要删除 /trim.media.tar.gz，因为 final 阶段还需要它）★★★
-  rm -f fnos.iso ${GOPKG}.tar.gz
+  # 清理临时文件
+  rm -f fnos.iso /tmp/trim.media.tar.gz ${GOPKG}.tar.gz
 
 FROM --platform=linux/arm64 debian:12.12
 
 ENV LD_LIBRARY_PATH=/usr/trim/lib/mediasrv LOG_LEVEL=info MEDIA_DIRS=/vol1/1000/media
 
+# 从builder复制构建产物
 COPY --from=builder /fniso/usr/trim /usr/trim
-# 从 builder 复制下载好的 trim.media.tar.gz
-COPY --from=builder /trim.media.tar.gz /tmp/trim.media.tar.gz
-# 使用 ADD 解压到目标目录
-ADD /tmp/trim.media.tar.gz /usr/local/apps/@appcenter/
+# ★★★ 直接复制已解压的 trim.media 目录 ★★★
+COPY --from=builder /fniso/usr/local/apps/@appcenter /usr/local/apps/@appcenter
 
 WORKDIR /usr/trim
 
