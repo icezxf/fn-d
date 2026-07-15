@@ -30,7 +30,7 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
   tar -C /opt -xvf ${GOPKG}.tar.gz && \
   GOARCH=arm64 /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker /fakebroker.go && \
-  # 清理临时文件（保留 /trim.media.tar.gz 给 final 阶段使用）
+  # ★★★ 清理临时文件（注意：不要删除 /trim.media.tar.gz，因为 final 阶段还需要它）★★★
   rm -f fnos.iso ${GOPKG}.tar.gz
 
 FROM --platform=linux/arm64 debian:12.12
