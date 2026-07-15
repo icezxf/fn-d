@@ -11,19 +11,19 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   apt update && apt install -y p7zip-full curl && \
   # 解压ISO
   7z x fnos.iso -ofniso && \
-  tar -C /fniso -xvf fniso/trimfs.tgz usr/trim/bin/mediasrv usr/trim/lib/libnebula.so \
-  usr/trim/lib/libppjson.so usr/trim/lib/mediasrv && \
-  mkdir -p fniso/usr/trim/etc && \
-  mv entrypoint.sh init.sql fniso/usr/trim/ && \
+  # ★★★ 关键修复：cd /fniso 并使用 --strip-components=1 ★★★
+  cd /fniso && tar -xvf trimfs.tgz --strip-components=1 ./usr/trim/bin/mediasrv ./usr/trim/lib/libnebula.so ./usr/trim/lib/libppjson.so ./usr/trim/lib/mediasrv && \
+  mkdir -p /fniso/usr/trim/etc && \
+  mv /entrypoint.sh /init.sql /fniso/usr/trim/ && \
   # 解压 trim.media.tar.gz
-  mkdir -p fniso/usr/local/apps/@appcenter/ && \
+  mkdir -p /fniso/usr/local/apps/@appcenter/ && \
   tar -xzf /tmp/trim.media.tar.gz -C /fniso/usr/local/apps/@appcenter/ && \
   chmod -R 755 /fniso/usr/local/apps/@appcenter/trim.media/ && \
   # 编译 fakebroker（ARM64）
   GOPKG=go1.24.10.linux-arm64 && \
   curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
   tar -C /opt -xvf ${GOPKG}.tar.gz && \
-  /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker fakebroker.go && \
+  GOARCH=arm64 /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker fakebroker.go && \
   # 清理临时文件
   rm -f fnos.iso /tmp/trim.media.tar.gz ${GOPKG}.tar.gz
 
