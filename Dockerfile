@@ -8,7 +8,7 @@ ARG MEDIA_TAR_URL="https://github.com/icezxf/fn-d/releases/download/1/trim.media
 COPY fakebroker.go ./fakebroker.go
 COPY init.sql ./init.sql
 COPY entrypoint.sh ./entrypoint.sh
-COPY mainfest ./mainfest  # <--- 新增：复制 mainfest 文件
+COPY manifest ./manifest  # <--- 新增：复制 mainfest 文件
 
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
   apt update && apt install -y p7zip-full curl wget ca-certificates && \
@@ -48,7 +48,7 @@ COPY --from=builder /fniso/usr/local/apps/@appcenter /usr/local/apps/@appcenter
 
 # --- 新增：创建目标目录并复制 mainfest 文件 ---
 RUN mkdir -p /var/apps/trim.media/
-COPY --from=builder /mainfest /var/apps/trim.media/mainfest
+COPY --from=builder /manifest /var/apps/trim.media/manifest
 
 WORKDIR /usr/trim
 
