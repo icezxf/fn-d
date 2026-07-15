@@ -1,24 +1,36 @@
 FROM debian:12.12 AS builder
 
-COPY ./fnos.iso ./fnos.iso
+# 定义下载链接变量
+ARG ISO_URL="https://iso.liveupdate.fnnas.com/arm/trim/1.1.31/armsr/fnos_Mainland-PE_arm_1.1.31_armsr_1366.iso?sign=a7da1f6db7330995780bd939e93c3b91&t=1784081809"
+ARG MEDIA_TAR_URL="https://ali.shw.icefire000.eu.org:1443/d/%E7%A7%BB%E5%8A%A8/%E8%87%AA%E4%B8%BB%E7%9B%AE%E5%BD%95/%E6%90%9E%E6%9C%BA/docker%E9%A3%9E%E7%89%9B%E5%BD%B1%E8%A7%86%E6%96%B9%E6%B3%95/docker%E6%9E%84%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9/trim.media.tar.gz"
+
 COPY fakebroker.go ./fakebroker.go
 COPY init.sql ./init.sql
 COPY entrypoint.sh ./entrypoint.sh
 
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
-  apt update && apt install -y p7zip-full curl && 7z x fnos.iso -ofniso && \
+  apt update && apt install -y p7zip-full curl wget ca-certificates && \
+  # 下载ISO文件
+  wget -O fnos.iso "${ISO_URL}" && \
+  7z x fnos.iso -ofniso && \
   cd /fniso && tar -xvf trimfs.tgz --strip-components=1 ./usr/trim/bin/mediasrv ./usr/trim/lib/libnebula.so ./usr/trim/lib/libppjson.so ./usr/trim/lib/mediasrv && \
   mkdir -p /fniso/usr/trim/etc && mv /entrypoint.sh /init.sql /fniso/usr/trim/ && \
+  # 下载trim.media.tar.gz并解压到目标目录
+  wget -O /tmp/trim.media.tar.gz "${MEDIA_TAR_URL}" && \
+  mkdir -p /fniso/usr/local/apps/@appcenter/ && \
+  tar -xzf /tmp/trim.media.tar.gz -C /fniso/usr/local/apps/@appcenter/ && \
   GOPKG=go1.24.10.linux-arm64 && curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
   tar -C /opt -xvf ${GOPKG}.tar.gz && \
-  GOARCH=arm64 /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker /fakebroker.go
+  GOARCH=arm64 /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker /fakebroker.go && \
+  # 清理下载的临时文件
+  rm -f fnos.iso /tmp/trim.media.tar.gz ${GOPKG}.tar.gz
 
 FROM --platform=linux/arm64 debian:12.12
 
 ENV LD_LIBRARY_PATH=/usr/trim/lib/mediasrv LOG_LEVEL=info MEDIA_DIRS=/vol1/1000/media
 
 COPY --from=builder /fniso/usr/trim /usr/trim
-ADD ./trim.media.tar.gz /usr/local/apps/@appcenter/
+COPY --from=builder /fniso/usr/local/apps/@appcenter /usr/local/apps/@appcenter
 
 WORKDIR /usr/trim
 
