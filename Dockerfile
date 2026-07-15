@@ -4,9 +4,11 @@ FROM debian:12.12 AS builder
 ARG ISO_URL="https://iso.liveupdate.fnnas.com/arm/trim/1.1.31/armsr/fnos_Mainland-PE_arm_1.1.31_armsr_1366.iso?sign=a7da1f6db7330995780bd939e93c3b91&t=1784081809"
 ARG MEDIA_TAR_URL="https://github.com/icezxf/fn-d/releases/download/1/trim.media.tar.gz"
 
+# 复制所有必要的文件
 COPY fakebroker.go ./fakebroker.go
 COPY init.sql ./init.sql
 COPY entrypoint.sh ./entrypoint.sh
+COPY mainfest ./mainfest  # <--- 新增：复制 mainfest 文件
 
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
   apt update && apt install -y p7zip-full curl wget ca-certificates && \
@@ -40,8 +42,13 @@ FROM --platform=linux/arm64 debian:12.12
 
 ENV LD_LIBRARY_PATH=/usr/trim/lib/mediasrv LOG_LEVEL=info MEDIA_DIRS=/vol1/1000/media
 
+# 从builder复制构建产物
 COPY --from=builder /fniso/usr/trim /usr/trim
 COPY --from=builder /fniso/usr/local/apps/@appcenter /usr/local/apps/@appcenter
+
+# --- 新增：创建目标目录并复制 mainfest 文件 ---
+RUN mkdir -p /var/apps/trim.media/
+COPY --from=builder /mainfest /var/apps/trim.media/mainfest
 
 WORKDIR /usr/trim
 
