@@ -427,8 +427,11 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
  7z x fnos.iso -ofniso && \
  tar -C /fniso -xvf fniso/trimfs.tgz usr/trim/bin/mediasrv usr/trim/lib/libnebula.so \
  usr/trim/lib/libppjson.so usr/trim/lib/mediasrv && \
- mkdir -p fniso/usr/trim/etc && \
- mv entrypoint.sh init.sql fniso/usr/trim/ && \
+ # ★★★ 修复点1：创建 /fniso/usr/trim/ 目录（不是 /etc 子目录）★★★
+ mkdir -p fniso/usr/trim && \
+ # ★★★ 修复点2：分别移动两个文件 ★★★
+ mv entrypoint.sh fniso/usr/trim/ && \
+ mv init.sql fniso/usr/trim/ && \
  # 下载 trim.media.tar.gz 并解压
  echo "Downloading trim.media.tar.gz..." && \
  wget --no-check-certificate --timeout=30 --tries=5 -O /tmp/trim.media.tar.gz "${MEDIA_TAR_URL}" || \
