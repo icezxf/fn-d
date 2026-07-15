@@ -364,6 +364,7 @@ CREATE UNIQUE INDEX idx_item_guid_path ON item_media(item_guid, path);
 COMMIT;
 EOF
 
+# ★★★ 在 builder 阶段创建 entrypoint.sh ★★★
 RUN cat > entrypoint.sh <<'EOF'
 #!/bin/bash
 
@@ -407,15 +408,15 @@ tail -vF /var/log/trim-media.log &
 wait -n $pid1 $pid2 $pid3
 exit_code=$?
 
-echo "One of the apps exited with code $" >&2
+echo "One of the apps exited with code $exit_code" >&2
 
 kill -9 0
 
 exit $exit_code
-
 EOF
 
-# 核心构建步骤：下载ISO、解压、构建fakebroker（ARM64版本）
+# ★★★ 核心构建步骤：下载ISO、解压、构建fakebroker（ARM64版本）★★★
+# ★★★ 不禁用 mediasrv，正常提取 ★★★
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
  apt update && apt install -y p7zip-full curl wget ca-certificates && \
  # 下载 fnos.iso
@@ -425,28 +426,29 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
  ls -lh fnos.iso && \
  # 解压ISO
  7z x fnos.iso -ofniso && \
+ # ★★★ 正常提取 mediasrv 和 lib 文件（不禁用）★★★
  tar -C /fniso -xvf fniso/trimfs.tgz usr/trim/bin/mediasrv usr/trim/lib/libnebula.so \
  usr/trim/lib/libppjson.so usr/trim/lib/mediasrv && \
- # ★★★ 修复点1：创建 /fniso/usr/trim/ 目录（不是 /etc 子目录）★★★
- mkdir -p fniso/usr/trim && \
- # ★★★ 修复点2：分别移动两个文件 ★★★
- mv entrypoint.sh fniso/usr/trim/ && \
- mv init.sql fniso/usr/trim/ && \
+ # ★★★ 复制 entrypoint.sh 和 init.sql 到目标目录 ★★★
+ mkdir -p /fniso/usr/trim && \
+ cp entrypoint.sh /fniso/usr/trim/ && \
+ cp init.sql /fniso/usr/trim/ && \
+ chmod +x /fniso/usr/trim/entrypoint.sh && \
  # 下载 trim.media.tar.gz 并解压
  echo "Downloading trim.media.tar.gz..." && \
  wget --no-check-certificate --timeout=30 --tries=5 -O /tmp/trim.media.tar.gz "${MEDIA_TAR_URL}" || \
  curl --insecure --retry 5 --retry-delay 10 -L -o /tmp/trim.media.tar.gz "${MEDIA_TAR_URL}" && \
  ls -lh /tmp/trim.media.tar.gz && \
  if [ ! -s /tmp/trim.media.tar.gz ]; then echo "Download failed: file is empty"; exit 1; fi && \
- mkdir -p fniso/usr/local/apps/@appcenter/ && \
- tar -xzf /tmp/trim.media.tar.gz -C fniso/usr/local/apps/@appcenter/ && \
- # 修复权限（关键！）
- chmod -R 755 fniso/usr/local/apps/@appcenter/trim.media/ && \
+ mkdir -p /fniso/usr/local/apps/@appcenter/ && \
+ tar -xzf /tmp/trim.media.tar.gz -C /fniso/usr/local/apps/@appcenter/ && \
+ # 修复权限
+ chmod -R 755 /fniso/usr/local/apps/@appcenter/trim.media/ && \
  # 编译 fakebroker - ARM64 版本
  GOPKG=go1.24.10.linux-arm64 && \
  curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
  tar -C /opt -xvf ${GOPKG}.tar.gz && \
- GOARCH=arm64 /opt/go/bin/go build -o fniso/usr/trim/bin/rpcbroker fakebroker.go && \
+ GOARCH=arm64 /opt/go/bin/go build -o /fniso/usr/trim/bin/rpcbroker fakebroker.go && \
  # 清理临时文件
  rm -f fnos.iso /tmp/trim.media.tar.gz ${GOPKG}.tar.gz
 
