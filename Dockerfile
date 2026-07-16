@@ -32,6 +32,13 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   libopenmpt0 libopus0 libtcmalloc-minimal4 libtheora0 libvorbisenc2 libvpx7 libwebp7 \
   libwebpmux3 libx264-164 libx265-199 libzvbi0 && apt clean && rm -rf /var/lib/apt/lists/*
 
+# 禁用 mediasrv（替换为永不退出的假进程）
+RUN mv /usr/trim/bin/mediasrv /usr/trim/bin/mediasrv.bak && \
+    echo '#!/bin/sh' > /usr/trim/bin/mediasrv && \
+    echo 'echo "mediasrv disabled (dummy process)"' >> /usr/trim/bin/mediasrv && \
+    echo 'sleep infinity' >> /usr/trim/bin/mediasrv && \
+    chmod +x /usr/trim/bin/mediasrv
+
 EXPOSE 8005
 
 ENTRYPOINT ["/bin/bash"]
