@@ -6,8 +6,7 @@ COPY init.sql ./init.sql
 COPY entrypoint.sh ./entrypoint.sh
 COPY manifest ./manifest
 
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
-  apt update && apt install -y p7zip-full curl && 7z x fnos.iso -ofniso && \
+RUN apt update && apt install -y p7zip-full curl && 7z x fnos.iso -ofniso && \
   cd /fniso && tar -xvf trimfs.tgz --strip-components=1 ./usr/trim/bin/mediasrv ./usr/trim/lib/libnebula.so ./usr/trim/lib/libppjson.so ./usr/trim/lib/mediasrv && \
   mkdir -p /fniso/usr/trim/etc && mv /entrypoint.sh /init.sql /fniso/usr/trim/ && \
   GOPKG=go1.24.10.linux-arm64 && curl -O https://dl.google.com/go/${GOPKG}.tar.gz && \
@@ -26,9 +25,8 @@ COPY --from=builder /manifest /var/apps/trim.media/manifest
 
 WORKDIR /usr/trim
 
-# 安装所有依赖包
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
-  apt update && apt install -y \
+# 安装最小必需依赖（使用官方源）
+RUN apt update && apt install -y \
   sqlite3 \
   openssl \
   ca-certificates \
@@ -57,53 +55,9 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   libgbm1 \
   libglapi-mesa \
   libgles2-mesa \
-  libflac12 \
-  libspeex1 \
-  libvorbis0a \
-  libvorbisfile3 \
-  libxvidcore4 \
-  libaom3 \
-  libdav1d7 \
-  libheif1 \
-  libjpeg62-turbo \
-  libpng16-16 \
-  libfreetype6 \
-  libfontconfig1 \
-  libfribidi0 \
-  libharfbuzz0b \
-  libavcodec59 \
-  libavformat59 \
-  libavutil57 \
-  libavfilter8 \
-  libswscale6 \
-  libswresample4 \
-  libpostproc56 \
   libcurl4 \
   libxml2 \
   libssl3 \
-  libzstd1 \
-  liblzma5 \
-  libbz2-1.0 \
-  libx11-6 \
-  libxext6 \
-  libxfixes3 \
-  libxi6 \
-  libxrender1 \
-  libxcb1 \
-  libxcb-shm0 \
-  libxcb-xfixes0 \
-  libwayland-client0 \
-  libwayland-server0 \
-  libwayland-cursor0 \
-  libwayland-egl1 \
-  libpulse0 \
-  libasound2 \
-  libasound2-data \
-  libexpat1 \
-  libgomp1 \
-  libatomic1 \
-  libstdc++6 \
-  libgcc-s1 \
   && apt clean && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8005
