@@ -21,12 +21,12 @@ ENV LD_LIBRARY_PATH=/usr/trim/lib/mediasrv LOG_LEVEL=info MEDIA_DIRS=/vol1/1000/
 COPY --from=builder /fniso/usr/trim /usr/trim
 ADD ./trim.media.tar.gz /usr/local/apps/@appcenter/
 
-# 新增：创建目标目录并复制 manifest 文件
 RUN mkdir -p /var/apps/trim.media/
 COPY --from=builder /manifest /var/apps/trim.media/manifest
 
 WORKDIR /usr/trim
 
+# 安装所有依赖包
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
   apt update && apt install -y \
   sqlite3 \
@@ -46,24 +46,19 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   libx264-164 \
   libx265-199 \
   libzvbi0 \
-<<<<<<< 修改开始 =======
   libva2 \
   libva-drm2 \
-======= 修改结束 =======
   && apt clean && rm -rf /var/lib/apt/lists/*
 
-<<<<<<< 修改开始（新增，可选） =======
-# 如果需要 Intel 硬件加速驱动（可选，根据实际需求）
-# 如果是 Intel CPU 环境，取消下面注释
-# RUN apt update && apt install -y intel-media-va-driver && apt clean
-======= 修改结束 =======
+# 如果需要 Intel 硬件加速驱动（可选），取消下面的注释
+# RUN apt update && apt install -y intel-media-va-driver && apt clean && rm -rf /var/lib/apt/lists/*
 
-# 禁用 mediasrv（替换为永不退出的假进程）
-#RUN mv /usr/trim/bin/mediasrv /usr/trim/bin/mediasrv.bak && \
-#    echo '#!/bin/sh' > /usr/trim/bin/mediasrv && \
-#    echo 'echo "mediasrv disabled (dummy process)"' >> /usr/trim/bin/mediasrv && \
-#    echo 'sleep infinity' >> /usr/trim/bin/mediasrv && \
-#    chmod +x /usr/trim/bin/mediasrv
+# 禁用 mediasrv（替换为永不退出的假进程）- 如果不需要可以取消注释
+# RUN mv /usr/trim/bin/mediasrv /usr/trim/bin/mediasrv.bak && \
+#     echo '#!/bin/sh' > /usr/trim/bin/mediasrv && \
+#     echo 'echo "mediasrv disabled (dummy process)"' >> /usr/trim/bin/mediasrv && \
+#     echo 'sleep infinity' >> /usr/trim/bin/mediasrv && \
+#     chmod +x /usr/trim/bin/mediasrv
 
 EXPOSE 8005
 
