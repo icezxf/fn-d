@@ -47,6 +47,7 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
   libx265-199 \
   libzvbi0 \
   libva2 \
+  libjemalloc2 \
   libva-drm2 \
   && apt clean && rm -rf /var/lib/apt/lists/*
 
