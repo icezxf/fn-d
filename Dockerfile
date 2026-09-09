@@ -28,9 +28,35 @@ COPY --from=builder /manifest /var/apps/trim.media/manifest
 WORKDIR /usr/trim
 
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
-  apt update && apt install -y sqlite3 openssl ca-certificates libass9 libbluray2 libmp3lame0 \
-  libopenmpt0 libopus0 libtcmalloc-minimal4 libtheora0 libvorbisenc2 libvpx7 libwebp7 \
-  libwebpmux3 libx264-164 libx265-199 libzvbi0 && apt clean && rm -rf /var/lib/apt/lists/*
+  apt update && apt install -y \
+  sqlite3 \
+  openssl \
+  ca-certificates \
+  libass9 \
+  libbluray2 \
+  libmp3lame0 \
+  libopenmpt0 \
+  libopus0 \
+  libtcmalloc-minimal4 \
+  libtheora0 \
+  libvorbisenc2 \
+  libvpx7 \
+  libwebp7 \
+  libwebpmux3 \
+  libx264-164 \
+  libx265-199 \
+  libzvbi0 \
+<<<<<<< 修改开始 =======
+  libva2 \
+  libva-drm2 \
+======= 修改结束 =======
+  && apt clean && rm -rf /var/lib/apt/lists/*
+
+<<<<<<< 修改开始（新增，可选） =======
+# 如果需要 Intel 硬件加速驱动（可选，根据实际需求）
+# 如果是 Intel CPU 环境，取消下面注释
+# RUN apt update && apt install -y intel-media-va-driver && apt clean
+======= 修改结束 =======
 
 # 禁用 mediasrv（替换为永不退出的假进程）
 #RUN mv /usr/trim/bin/mediasrv /usr/trim/bin/mediasrv.bak && \
